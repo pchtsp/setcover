@@ -44,24 +44,35 @@ def solve_it(input_data):
     # the second makes the model bigger but helps in the relaxation
 
     set_chosen = LpVariable.dicts("set", sets, 0, 1, LpInteger)
-    item_chosen_by_set = LpVariable.dicts("item", setItems_tuple, 0, 1, LpInteger)
+    # item_chosen_by_set = LpVariable.dicts("item_set", setItems_tuple, 0, 1, LpInteger)
+    # item_chosen = LpVariable.dicts("item", items, 0, 1, LpInteger)
     # print item_chosen_by_set
     #Objective function
     model += lpSum([set_chosen[i]*setCost[i] for i in sets]), "Total cost of sets"
 
     #Constraints:
-    for s in sets:
-        for i in setItems[s]:
-            model += item_chosen_by_set[i,s] <= set_chosen[s], "if set %i is not chosen: it cannot cover item %i" % (s, i)
 
+    # option 1: simple model, one variable, one contraint.
     for i in items:
-        model += lpSum([item_chosen_by_set[i,s] for s in sets if i in setItems[s]]) >= 1, "at least one set covers item %i" % i
+        model += lpSum([set_chosen[s] for s in sets if i in setItems[s]]) >= 1, "at least one set covers item %i" % i
+	
+    # option 2: three variables, three constraints.
+    # for s in sets:
+        # for i in setItems[s]:
+            # model += item_chosen_by_set[i,s] <= set_chosen[s], "if set %i is not chosen: it cannot cover item %i" % (s, i)
+    
+    # for s in sets:
+        # for i in setItems[s]:
+            # model += item_chosen_by_set[i,s] >= item_chosen[i], "if set %i covers item %i: the item is selected" % (s, i)
+             
+    # for i in items:
+        # model += lpSum([item_chosen_by_set[i,s] for s in sets if i in setItems[s]]) >= 1, "at least one set covers item %i" % i
 	
 
     model.writeLP("ejemplo.pl")
-
-    # model.solve(GLPK_CMD())
-    model.solve()
+    # COIN_CMD, PULP_CBC_CMD, GLPK_CMD
+    model.solve(GLPK_CMD())
+    # model.solve()
 
     output_data = str(int(value(model.objective))) + ' ' + str(1) + '\n'
 
